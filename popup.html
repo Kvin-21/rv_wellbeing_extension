@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>River Valley Wellbeing</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+    <defs>
+      <filter id="frosted">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="12"/>
+        <feColorMatrix type="saturate" values="1.5"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="container glass">
+    <header class="header">
+      <img src="icons/logo-rvhs.png" alt="River Valley High School" class="logo">
+      <div class="streak glass-element" id="streakDisplay">
+        <span class="streak-icon">🔥</span>
+        <span class="streak-text">0 day streak</span>
+      </div>
+    </header>
+
+    <nav class="tabs glass-element" role="tablist">
+      <button class="tab active" data-tab="home" role="tab" aria-selected="true" aria-controls="home-tab">
+        Home
+      </button>
+      <button class="tab" data-tab="settings" role="tab" aria-selected="false" aria-controls="settings-tab">
+        Settings
+      </button>
+      <button class="tab" data-tab="feedback" role="tab" aria-selected="false" aria-controls="feedback-tab">
+        Feedback
+      </button>
+    </nav>
+
+    <div class="tab-content active" id="home-tab" role="tabpanel">
+      <div class="screen" id="emojiScreen">
+        <h2 class="screen-title">How are you feeling?</h2>
+        <div class="emoji-grid">
+          <button class="emoji-btn glass-element" data-emotion="happy" aria-label="Feeling happy">
+            <span class="emoji">😊</span>
+            <span class="emoji-label">Happy</span>
+          </button>
+          <button class="emoji-btn glass-element" data-emotion="stressed" aria-label="Feeling stressed">
+            <span class="emoji">😟</span>
+            <span class="emoji-label">Stressed</span>
+          </button>
+          <button class="emoji-btn glass-element" data-emotion="lonely" aria-label="Feeling lonely">
+            <span class="emoji">🥺</span>
+            <span class="emoji-label">Lonely</span>
+          </button>
+          <button class="emoji-btn glass-element" data-emotion="excited" aria-label="Feeling excited">
+            <span class="emoji">😆</span>
+            <span class="emoji-label">Excited</span>
+          </button>
+          <button class="emoji-btn glass-element" data-emotion="frustrated" aria-label="Feeling frustrated">
+            <span class="emoji">😤</span>
+            <span class="emoji-label">Frustrated</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="screen hidden" id="responseScreen">
+        <div class="response-card glass-element">
+          <p class="validation" id="validationText"></p>
+          <div class="micro-action glass-inner">
+            <h3>Try this:</h3>
+            <p id="microActionText"></p>
+          </div>
+          <div class="response-actions">
+            <button class="btn btn-primary glass-button" id="tryThisBtn">
+              I'll try this
+            </button>
+            <button class="btn btn-secondary glass-button" id="anotherIdeaBtn">
+              Give me another idea
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="settings-tab" role="tabpanel">
+      <div class="settings-section">
+        <h2 class="section-title">Settings</h2>
+        
+        <div class="setting-group glass-element">
+          <h3 class="group-title">Daily Reminder</h3>
+          <div class="setting-item">
+            <div class="setting-info">
+              <label class="setting-label" for="reminderToggle">Check-in Notification</label>
+              <p class="setting-description">Get a reminder each day at 10:30 AM</p>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="reminderToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-group glass-element">
+          <h3 class="group-title">Theme</h3>
+          <p class="group-description">Choose your preferred visual style</p>
+          <div class="theme-selector">
+            <button class="theme-btn glass-button active" data-theme="glass">
+              <div class="theme-preview glass-preview"></div>
+              <span>Glass</span>
+            </button>
+            <button class="theme-btn glass-button" data-theme="light">
+              <div class="theme-preview light-preview"></div>
+              <span>Light</span>
+            </button>
+            <button class="theme-btn glass-button" data-theme="dark">
+              <div class="theme-preview dark-preview"></div>
+              <span>Dark</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback -->
+    <div class="tab-content" id="feedback-tab" role="tabpanel">
+      <div class="feedback-section">
+        <h2 class="section-title">Share Your Thoughts</h2>
+        <p class="feedback-description">
+          Tell us how you're feeling, what's on your mind, or share any suggestions. Your voice matters.
+        </p>
+        <textarea 
+          class="feedback-textarea glass-element" 
+          id="feedbackText" 
+          placeholder="What's on your mind?" 
+          rows="5"
+          maxlength="500"
+        ></textarea>
+        <button class="btn btn-primary glass-button" id="submitFeedback">
+          Submit Feedback
+        </button>
+        <div class="feedback-success hidden" id="feedbackSuccess">
+          <span class="success-icon">✓</span>
+          <span>Thank you for sharing!</span>
+        </div>
+        
+        <div class="quick-link">
+          <a href="https://rivervalleyhigh.moe.edu.sg" target="_blank" class="school-link glass-button">
+            Visit River Valley High School →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
