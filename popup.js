@@ -1,5 +1,5 @@
-const apps_script_url = '';
-const REMINDER_TIME = { hour: 10, minute: 30 }; // 10:30 AM
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9ChaWlEP6e7KlOr8XYF_z5KhNZNpNnNgx3QZ9ilPqRyBIKxKvBi_3raK9Vu7Oj19v/exec';
+const REMINDER_TIME = { hour: 08, minute: 15 }; // 8:15 AM
 
 let currentEmotion = null;
 let responses = {};
@@ -218,7 +218,7 @@ async function logMood(mood) {
           timestamp: new Date().toISOString()
         };
         
-        const response = await fetch(apps_script_url, {
+        const response = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors', 
           headers: {
@@ -250,7 +250,7 @@ async function logFeedback(text) {
           timestamp: new Date().toISOString()
         };
         
-        const response = await fetch(apps_script_url, {
+        const response = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: {
