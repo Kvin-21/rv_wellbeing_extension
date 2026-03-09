@@ -162,12 +162,12 @@ body.theme-dark .glass-element {
   height: 520px;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--c-glass) 40%, transparent) transparent;
+  scrollbar-width: none;
 }
 
 .container::-webkit-scrollbar {
-  width: 6px;
+  width: 0;
+  display: none;
 }
 
 .container::-webkit-scrollbar-track {
@@ -175,8 +175,7 @@ body.theme-dark .glass-element {
 }
 
 .container::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--c-glass) 40%, transparent);
-  border-radius: 10px;
+  background: transparent;
 }
 
 .header {
@@ -509,61 +508,416 @@ body.theme-dark .glass-element {
   line-height: 1.4;
 }
 
-/* TOGGLE SWITCH */
-.toggle {
+/* TOGGLE SWITCH — liquid */
+.liquid-toggle {
+  --unchecked: hsl(218, 8%, 81%);
+  --checked: hsl(144, 92%, 43%);
+  --control: hsl(300, 100%, 100%);
+  --border: 4px;
+  --width: 56;
+  --height: 28;
+  --complete: 0;
+  height: calc(var(--height) * 1px);
+  width: calc(var(--width) * 1px);
+  border-radius: 100px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 26px;
+  overflow: visible;
+  container-type: inline-size;
+  background: transparent;
+  transition: outline var(--transition-normal);
+  outline-offset: 2px;
   flex-shrink: 0;
 }
 
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+.liquid-toggle:focus-visible {
+  outline: 3px solid var(--c-action);
 }
 
-.toggle-slider {
+.liquid-toggle[aria-checked="false"] {
+  --complete: 0;
+}
+
+.liquid-toggle[aria-checked="true"] {
+  --complete: 100;
+}
+
+.liquid-toggle .indicator {
+  border-radius: 100px;
+  pointer-events: none;
+  height: 100%;
+  width: 100%;
+  background: hsl(218, 8%, 81%);
   position: absolute;
-  cursor: pointer;
-  top: 0;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  transition: background var(--transition-normal);
+}
+
+.liquid-toggle[aria-checked="true"] .indicator {
+  background: var(--checked);
+}
+
+.liquid-toggle .knockout {
+  height: calc(var(--height) * 1px);
+  width: calc(var(--width) * 1px);
+  border-radius: 100px;
+  filter: url(#remove-black);
+  position: absolute;
+  inset: 0;
+  will-change: filter;
+  transform: translate3d(0, 0, 0);
+}
+
+.liquid-toggle .indicator--masked {
+  background: hsl(218, 8%, 81%);
+  z-index: 12;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  container-type: inline-size;
+  border-radius: 100px;
+  transition: background var(--transition-normal);
+}
+
+.liquid-toggle[aria-checked="true"] .indicator--masked {
+  background: var(--checked);
+}
+
+.liquid-toggle .indicator--masked .mask {
+  position: absolute;
+  height: calc(100% - (2 * var(--border)));
+  width: calc(60% - (2 * var(--border)));
+  top: 50%;
+  background: #000;
+  left: var(--border);
+  border-radius: 100px;
+  translate: calc(
+    (var(--complete) / 100) * (100cqi - 60cqi - (0 * var(--border)))
+  ) -50%;
+  transition: translate var(--transition-normal), height var(--transition-normal), width var(--transition-normal), margin-left var(--transition-normal);
+}
+
+/* bubble expand on press */
+.liquid-toggle:active .indicator--masked .mask {
+  height: calc((100% - (2 * var(--border))) * 1.65);
+  width: calc((60% - (2 * var(--border))) * 1.65);
+  margin-left: calc((60% - (2 * var(--border))) * -0.325);
+}
+
+.liquid-toggle .wrapper {
+  position: absolute;
+  inset: 0;
+  border-radius: 100px;
+  clip-path: inset(0 0 0 0 round 100px);
+  filter: blur(5px);
+  transition: filter var(--transition-normal);
+}
+
+/* blur clears on press so the goo effect renders cleanly */
+.liquid-toggle:active .wrapper {
+  filter: blur(0px);
+}
+
+.liquid-toggle .liquids {
+  position: absolute;
+  inset: 0;
+  border-radius: 100px;
+  overflow: hidden;
+  filter: url(#goo);
+}
+
+.liquid-toggle .liquid__shadow {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0px 0px 3px 3px hsl(218, 8%, 81%);
+  border-radius: 100px;
+  transition: box-shadow var(--transition-normal);
+}
+
+.liquid-toggle[aria-checked="true"] .liquid__shadow {
+  box-shadow: inset 0px 0px 3px 3px var(--checked);
+}
+
+.liquid-toggle .liquid__track {
+  content: '';
+  height: 100%;
+  width: 100%;
+  background: hsl(218, 8%, 81%);
+  border-radius: 100px;
+  position: absolute;
+  top: 50%;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: color-mix(in srgb, var(--c-glass) 30%, transparent);
-  transition: var(--transition-normal);
-  border-radius: 26px;
-  border: 1px solid color-mix(in srgb, var(--c-content) 20%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  translate: calc(
+    (var(--complete) / 100) * (100cqi - 100% - (6 * var(--border)))
+  ) -50%;
+  transition: translate var(--transition-normal), background var(--transition-normal);
 }
 
-.toggle-slider:before {
+.liquid-toggle[aria-checked="true"] .liquid__track {
+  background: var(--checked);
+}
+
+.liquid-toggle .indicator__liquid {
   position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
+  height: calc(100% - (2 * var(--border)));
+  width: calc(60% - (2 * var(--border)));
+  container-type: inline-size;
+  top: 50%;
+  background: transparent;
+  left: var(--border);
+  border-radius: 100px;
+  translate: calc(
+    (var(--complete) / 100) * (100cqi - 100% - (2 * var(--border)))
+  ) -50%;
+  transition: translate var(--transition-normal), scale var(--transition-normal);
+}
+
+/* bubble squish on press */
+.liquid-toggle:active .indicator__liquid {
+  scale: 1.65 0.85;
+}
+
+.liquid-toggle .indicator__liquid .cover {
+  content: '';
+  position: absolute;
+  inset: 0;
   background: white;
-  transition: var(--transition-normal);
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 100px;
+  transition: opacity var(--transition-normal);
 }
 
-.toggle input:checked + .toggle-slider {
-  background: var(--rvhs-blue);
-  border-color: var(--rvhs-blue);
+.liquid-toggle[aria-checked="true"] .indicator__liquid .cover {
+  opacity: 1;
 }
 
-.toggle input:checked + .toggle-slider:before {
-  transform: translateX(22px);
+.liquid-toggle .indicator__liquid .shadow {
+  opacity: 0;
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 100px;
+  box-shadow: 
+    1px -1px 2px hsl(0 0% 100% / 0.5) inset,
+    0px -1px 2px hsl(0 0% 100% / 0.5) inset,
+    -1px -1px 2px hsl(0 0% 100% / 0.5) inset,
+    1px 1px 2px hsl(0 0% 30% / 0.5) inset,
+    -8px 4px 10px -6px hsl(0 0% 30% / 0.25) inset,
+    -1px 1px 6px hsl(0 0% 30% / 0.25) inset,
+    -1px -1px 8px hsl(0 0% 60% / 0.15),
+    1px 1px 2px hsl(0 0% 30% / 0.15),
+    2px 2px 6px hsl(0 0% 30% / 0.15),
+    -2px -1px 2px hsl(0 0% 100% / 0.25) inset,
+    3px 6px 16px -6px hsl(0 0% 30% / 0.5);
+  z-index: 20;
+  transition: opacity var(--transition-normal);
 }
 
-.toggle input:focus-visible + .toggle-slider {
-  outline: 2px solid var(--c-action);
-  outline-offset: 2px;
+.liquid-toggle[aria-checked="true"] .indicator__liquid .shadow {
+  opacity: 0;
+}
+
+/* Liquid toggle JS interaction bridge */
+.liquid-toggle:active .indicator__liquid .cover {
+  opacity: 0;
+}
+
+.liquid-toggle:active .indicator__liquid .shadow {
+  opacity: 0;
+}
+
+/* THEME SWITCHER PILL */
+.switcher {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  /* wider pill so all 3 options fit with room to breathe */
+  width: 100%;
+  max-width: 288px;
+  height: 60px;
+  box-sizing: border-box;
+  padding: 5px 6px;
+  margin: 0 auto;
+  border: none;
+  border-radius: 99em;
+  background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
+  backdrop-filter: blur(8px) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    0px 1px 5px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 6px 16px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
+  transition: background-color var(--transition-slow), box-shadow var(--transition-slow);
+  position: relative;
+}
+
+.switcher__legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  white-space: nowrap;
+  clip-path: inset(100%);
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+.switcher__input {
+  clip: rect(0 0 0 0);
+  clip-path: inset(100%);
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+}
+
+/* each option is an equal third of the pill */
+.switcher__option {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 99em;
+  opacity: 1;
+  transition: all 160ms;
+  cursor: pointer;
+  padding: 0;
+  /* clip so the preview square never pokes outside the pill */
+  overflow: hidden;
+}
+
+/* the inner column: preview square + label text */
+.switcher__label-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  /* keep content fully inside the moving sub-pill */
+  width: 100%;
+  height: 100%;
+  transition: scale 200ms cubic-bezier(0.5, 0, 0, 1);
+}
+
+.switcher__option:hover .switcher__label-inner {
+  scale: 1.08;
+}
+
+.switcher__option:has(input:checked) {
+  cursor: auto;
+}
+
+.switcher__option:has(input:checked) .switcher__label-inner {
+  scale: 1;
+}
+
+/* colour preview square — kept small so it fits inside the sub-pill vertically */
+.switcher__preview {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid color-mix(in srgb, var(--c-content) 25%, transparent);
+  transition: transform var(--transition-normal), border-color var(--transition-normal);
+  flex-shrink: 0;
+  display: block;
+}
+
+.switcher__option:hover .switcher__preview {
+  border-color: var(--c-action);
+}
+
+.switcher__option:has(input:checked) .switcher__preview {
+  border-color: var(--c-action);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-action) 30%, transparent);
+}
+
+.switcher__text {
+  font-size: 10px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--c-content) 70%, transparent);
+  transition: color var(--transition-slow);
+  font-family: inherit;
+  line-height: 1;
+}
+
+.switcher__option:hover .switcher__text {
+  color: var(--c-action);
+}
+
+.switcher__option:has(input:checked) .switcher__text {
+  color: var(--c-action);
+}
+
+/* The sliding sub-pill indicator */
+.switcher::after {
+  content: '';
+  position: absolute;
+  /* starts at left inner edge */
+  left: 8px;
+  top: 5px;
+  display: block;
+  /* each sub-pill is exactly one-third of the inner width */
+  width: calc(33.33% - 5px);
+  height: calc(100% - 11px);
+  border-radius: 99em;
+  background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
+  z-index: -1;
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+    inset 2px 1px 0px -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent), 
+    inset -1.5px -1px 0px -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent), 
+    inset -1px 2px 3px -1px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    0px 3px 6px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
+  transition: translate var(--transition-slow), background-color var(--transition-slow), box-shadow var(--transition-slow);
+}
+
+.switcher:has(input[c-option="1"]:checked)::after {
+  translate: 0 0;
+  animation: scaleToggle 440ms ease;
+}
+
+.switcher:has(input[c-option="2"]:checked)::after {
+  /* moves one sub-pill width to the right */
+  translate: calc(100%) 0;
+  animation: scaleToggle2 440ms ease;
+}
+
+.switcher:has(input[c-option="3"]:checked)::after {
+  /* moves two sub-pill widths to the right */
+  translate: calc(200% + 1px) 0;
+  animation: scaleToggle3 440ms ease;
+}
+
+@keyframes scaleToggle {
+  0% { scale: 1 1; }
+  50% { scale: 1.1 1; }
+  100% { scale: 1 1; }
+}
+
+@keyframes scaleToggle2 {
+  0% { scale: 1 1; }
+  50% { scale: 1.2 1; }
+  100% { scale: 1 1; }
+}
+
+@keyframes scaleToggle3 {
+  0% { scale: 1 1; }
+  50% { scale: 1.1 1; }
+  100% { scale: 1 1; }
 }
 
 .theme-selector {
@@ -608,15 +962,15 @@ body.theme-dark .glass-element {
 }
 
 .theme-preview {
-  width: 36px;
-  height: 36px;
+  width: 33px;
+  height: 29px;
   border-radius: var(--radius-sm);
   border: 2px solid color-mix(in srgb, var(--c-content) 20%, transparent);
   transition: transform var(--transition-normal);
 }
 
 .theme-btn:hover .theme-preview {
-  transform: scale(1.1);
+  transform: scale(1.4);
 }
 
 .glass-preview {
@@ -728,6 +1082,35 @@ body.theme-dark .glass-element {
   outline-offset: 2px;
 }
 
+.credit-watermark {
+  font-size: 9px;
+  font-family: inherit;
+  user-select: text;
+  margin-top: var(--spacing-lg);
+  text-align: center;
+  letter-spacing: 0.3px;
+  cursor: default;
+  color: #E8E8E9;
+  -webkit-text-fill-color: #E8E8E9;
+  text-shadow: none;
+}
+
+body.theme-light .credit-watermark {
+  color: #ede9f5;
+  -webkit-text-fill-color: #ede9f5;
+}
+
+body.theme-dark .credit-watermark {
+  color: #1b1b1d;
+  -webkit-text-fill-color: #1b1b1d;
+}
+
+.credit-watermark::selection {
+  background: var(--c-action);
+  color: white;
+  -webkit-text-fill-color: white;
+}
+
 .hidden {
   display: none !important;
 }
@@ -744,7 +1127,8 @@ body.theme-dark .glass-element {
 
 #home-tab::-webkit-scrollbar,
 #feedback-tab::-webkit-scrollbar {
-  width: 6px;
+  width: 0;
+  display: none;
 }
 
 #home-tab::-webkit-scrollbar-track,
@@ -754,6 +1138,5 @@ body.theme-dark .glass-element {
 
 #home-tab::-webkit-scrollbar-thumb,
 #feedback-tab::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--c-glass) 40%, transparent);
-  border-radius: 10px;
+  background: transparent;
 }

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- rv_wellbeing_extension · Kavin Bhambri -->
   <title>River Valley Wellbeing</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,6 +13,22 @@
       <filter id="frosted">
         <feGaussianBlur in="SourceGraphic" stdDeviation="12"/>
         <feColorMatrix type="saturate" values="1.5"/>
+      </filter>
+      <filter id="goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+        <feColorMatrix in="blur" mode="matrix"
+          values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  0 0 0 16 -10" result="goo"/>
+        <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+      </filter>
+      <filter id="remove-black" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix"
+          values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  -10 -10 -10 30 0"/>
       </filter>
     </defs>
   </svg>
@@ -38,6 +55,7 @@
     </nav>
 
     <div class="tab-content active" id="home-tab" role="tabpanel">
+      <!-- author: Kavin Bhambri -->
       <div class="screen" id="emojiScreen">
         <h2 class="screen-title">How are you feeling?</h2>
         <div class="emoji-grid">
@@ -94,31 +112,68 @@
               <label class="setting-label" for="reminderToggle">Check-in Notification</label>
               <p class="setting-description">Get a reminder each day at 8:15 AM</p>
             </div>
-            <label class="toggle">
-              <input type="checkbox" id="reminderToggle">
-              <span class="toggle-slider"></span>
-            </label>
+            <!-- liquid toggle -->
+            <button
+              class="liquid-toggle"
+              id="reminderToggleBtn"
+              role="switch"
+              aria-checked="false"
+              aria-label="Toggle daily reminder"
+            >
+              <input type="checkbox" id="reminderToggle" style="display:none" tabindex="-1">
+              <div class="indicator" aria-hidden="true"></div>
+              <div class="knockout" aria-hidden="true">
+                <div class="indicator--masked">
+                  <div class="mask"></div>
+                </div>
+              </div>
+              <div class="wrapper" aria-hidden="true">
+                <div class="liquids">
+                  <div class="liquid__shadow"></div>
+                  <div class="liquid__track"></div>
+                </div>
+              </div>
+              <div class="indicator__liquid" aria-hidden="true">
+                <div class="cover"></div>
+                <div class="shadow"></div>
+              </div>
+            </button>
           </div>
         </div>
 
         <div class="setting-group glass-element">
           <h3 class="group-title">Theme</h3>
           <p class="group-description">Choose your preferred visual style</p>
-          <div class="theme-selector">
-            <button class="theme-btn glass-button active" data-theme="glass">
-              <div class="theme-preview glass-preview"></div>
-              <span>Glass</span>
-            </button>
-            <button class="theme-btn glass-button" data-theme="light">
-              <div class="theme-preview light-preview"></div>
-              <span>Light</span>
-            </button>
-            <button class="theme-btn glass-button" data-theme="dark">
-              <div class="theme-preview dark-preview"></div>
-              <span>Dark</span>
-            </button>
-          </div>
+          <!-- glass switcher pill -->
+          <fieldset class="switcher" id="themeSwitcher" c-previous="1">
+            <legend class="switcher__legend">Theme</legend>
+
+            <label class="switcher__option">
+              <input class="switcher__input" type="radio" name="theme-switcher" value="glass" c-option="1" checked>
+              <span class="switcher__label-inner">
+                <span class="theme-preview glass-preview switcher__preview" aria-hidden="true"></span>
+                <span class="switcher__text">Glass</span>
+              </span>
+            </label>
+
+            <label class="switcher__option">
+              <input class="switcher__input" type="radio" name="theme-switcher" value="light" c-option="2">
+              <span class="switcher__label-inner">
+                <span class="theme-preview light-preview switcher__preview" aria-hidden="true"></span>
+                <span class="switcher__text">Light</span>
+              </span>
+            </label>
+
+            <label class="switcher__option">
+              <input class="switcher__input" type="radio" name="theme-switcher" value="dark" c-option="3">
+              <span class="switcher__label-inner">
+                <span class="theme-preview dark-preview switcher__preview" aria-hidden="true"></span>
+                <span class="switcher__text">Dark</span>
+              </span>
+            </label>
+          </fieldset>
         </div>
+
       </div>
     </div>
 
@@ -149,6 +204,7 @@
             Visit River Valley High School →
           </a>
         </div>
+        <p class="credit-watermark">github.com/Kvin-21/rv_wellbeing_extension</p>
       </div>
     </div>
   </div>

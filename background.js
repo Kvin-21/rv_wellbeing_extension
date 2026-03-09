@@ -1,3 +1,6 @@
+// github.com/Kvin-21/rv_wellbeing_extension
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9ChaWlEP6e7KlOr8XYF_z5KhNZNpNnNgx3QZ9ilPqRyBIKxKvBi_3raK9Vu7Oj19v/exec';
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('River Valley Wellbeing extension installed');
@@ -8,6 +11,24 @@ chrome.runtime.onInstalled.addListener(() => {
       chrome.storage.local.set({ dailyReminder: false });
     }
   });
+});
+
+// Handle data logging messages from popup — all fetch calls live here
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'LOG_DATA') {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(message.payload)
+    })
+      .then(() => sendResponse({ success: true }))
+      .catch((err) => {
+        console.error('Background fetch failed:', err);
+        sendResponse({ success: false });
+      });
+    return true; // keep message channel open for async response
+  }
 });
 
 // (daily reminders)
@@ -31,12 +52,31 @@ function showDailyReminder() {
 
 chrome.notifications.onClicked.addListener((notificationId) => {
   if (notificationId === 'dailyCheckIn') {
-    chrome.windows.getCurrent((window) => {
-      chrome.action.openPopup();
-    });
-    
     // Clear notif
     chrome.notifications.clear(notificationId);
+
+    // Focus existing window then open popup; fallback to a popup window
+    chrome.windows.getAll({ populate: true }, (windows) => {
+      if (windows.length > 0) {
+        chrome.windows.update(windows[0].id, { focused: true }, () => {
+          chrome.action.openPopup().catch(() => {
+            chrome.windows.create({
+              url: chrome.runtime.getURL('popup.html'),
+              type: 'popup',
+              width: 380,
+              height: 560
+            });
+          });
+        });
+      } else {
+        chrome.windows.create({
+          url: chrome.runtime.getURL('popup.html'),
+          type: 'popup',
+          width: 380,
+          height: 560
+        });
+      }
+    });
   }
 });
 
@@ -51,7 +91,6 @@ async function retryFailedRequests() {
     
     if (queue.length === 0) return;
     
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9ChaWlEP6e7KlOr8XYF_z5KhNZNpNnNgx3QZ9ilPqRyBIKxKvBi_3raK9Vu7Oj19v/exec';
     const successfulRequests = [];
     
     for (let i = 0; i < queue.length; i++) {

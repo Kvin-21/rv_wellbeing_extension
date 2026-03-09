@@ -1,4 +1,3 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9ChaWlEP6e7KlOr8XYF_z5KhNZNpNnNgx3QZ9ilPqRyBIKxKvBi_3raK9Vu7Oj19v/exec';
 const REMINDER_TIME = { hour: 08, minute: 15 }; // 8:15 AM
 
 let currentEmotion = null;
@@ -15,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initialiseResponseButtons();
   initialiseSettings();
   initialiseFeedback();
+  initialiseThemeSwitcher();
   
   // Update streak
   await updateStreakDisplay();
@@ -142,7 +142,7 @@ function displayRandomResponse(emotion) {
   );
   usedResponseIndices[emotion].validations.push(validationIndex);
   
-  // Random action (avoid repeats)
+  // Random action
   const microActions = emotionData.microActions[timeOfDay] || emotionData.microActions.daytime;
   const actionIndex = getRandomIndex(
     microActions.length,
@@ -218,20 +218,18 @@ async function logMood(mood) {
           timestamp: new Date().toISOString()
         };
         
-        const response = await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors', 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
+        chrome.runtime.sendMessage({ type: 'LOG_DATA', payload }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Failed to log mood:', chrome.runtime.lastError.message);
+            queueFailedRequest('mood', { mood, anonId, timestamp: new Date().toISOString() });
+            reject(chrome.runtime.lastError);
+          } else {
+            console.log('Mood logged successfully');
+            resolve();
+          }
         });
-        
-        console.log('Mood logged successfully');
-        resolve();
       } catch (error) {
         console.error('Failed to log mood:', error);
-        // Queue for retry (in local storage)
         queueFailedRequest('mood', { mood, anonId, timestamp: new Date().toISOString() });
         reject(error);
       }
@@ -250,17 +248,16 @@ async function logFeedback(text) {
           timestamp: new Date().toISOString()
         };
         
-        const response = await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
+        chrome.runtime.sendMessage({ type: 'LOG_DATA', payload }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Failed to log feedback:', chrome.runtime.lastError.message);
+            queueFailedRequest('feedback', { text, anonId, timestamp: new Date().toISOString() });
+            reject(chrome.runtime.lastError);
+          } else {
+            console.log('Feedback logged successfully');
+            resolve();
+          }
         });
-        
-        console.log('Feedback logged successfully');
-        resolve();
       } catch (error) {
         console.error('Failed to log feedback:', error);
         queueFailedRequest('feedback', { text, anonId, timestamp: new Date().toISOString() });
@@ -282,13 +279,17 @@ function queueFailedRequest(type, data) {
 async function updateStreak() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['lastCheckIn', 'streak'], (res) => {
-      const today = new Date().toDateString();
+      const todayStr = new Date().toDateString();
       const lastCheckIn = res.lastCheckIn;
       let streak = res.streak || 0;
       
       if (lastCheckIn) {
         const lastDate = new Date(lastCheckIn);
-        const dayDiff = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
+        const today = new Date();
+        // Compare calendar days, not raw ms diff
+        const lastMidnight = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+        const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const dayDiff = Math.round((todayMidnight - lastMidnight) / (1000 * 60 * 60 * 24));
         
         if (dayDiff === 0) {
           // Same day, no change
@@ -296,7 +297,7 @@ async function updateStreak() {
           // Consecutive day
           streak++;
         } else {
-          // Streak broken
+          // Streak broken — missed one or more days, reset to 1 for today
           streak = 1;
         }
       } else {
@@ -304,7 +305,7 @@ async function updateStreak() {
         streak = 1;
       }
       
-      chrome.storage.local.set({ lastCheckIn: today, streak: streak }, () => {
+      chrome.storage.local.set({ lastCheckIn: todayStr, streak: streak }, () => {
         updateStreakDisplay();
         resolve();
       });
@@ -316,9 +317,18 @@ async function updateStreakDisplay() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['streak'], (res) => {
       const streak = res.streak || 0;
+      const streakEl = document.getElementById('streakDisplay');
       const streakText = document.querySelector('.streak-text');
-      if (streakText) {
-        streakText.textContent = `${streak} day${streak !== 1 ? 's' : ''} streak`;
+      
+      if (streak > 0) {
+        // Show streak
+        if (streakEl) streakEl.style.display = 'flex';
+        if (streakText) {
+          streakText.textContent = `${streak} day${streak !== 1 ? 's' : ''} streak`;
+        }
+      } else {
+        // Hide streak entirely when it's 0
+        if (streakEl) streakEl.style.display = 'none';
       }
       resolve();
     });
@@ -326,39 +336,60 @@ async function updateStreakDisplay() {
 }
 
 function initialiseSettings() {
-  const reminderToggle = document.getElementById('reminderToggle');
-  const themeButtons = document.querySelectorAll('.theme-btn');
+  const reminderToggleBtn = document.getElementById('reminderToggleBtn');
+  const reminderCheckbox = document.getElementById('reminderToggle');
   
-  // Reminder toggle
-  reminderToggle.addEventListener('change', async () => {
-    const enabled = reminderToggle.checked;
-    await chrome.storage.local.set({ dailyReminder: enabled });
-    
-    if (enabled) {
-      // Alarm
-      chrome.alarms.create('dailyReminder', {
-        when: getNextReminderTime(),
-        periodInMinutes: 24 * 60 // Every day
-      });
-    } else {
-      // Clear alarm
-      chrome.alarms.clear('dailyReminder');
-    }
-  });
-  
-  // Theme selector
-  themeButtons.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const theme = btn.getAttribute('data-theme');
+  // Reminder liquid toggle
+  if (reminderToggleBtn) {
+    reminderToggleBtn.addEventListener('click', async () => {
+      const isChecked = reminderToggleBtn.getAttribute('aria-checked') === 'true';
+      const newState = !isChecked;
       
-      themeButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      reminderToggleBtn.setAttribute('aria-checked', String(newState));
+      if (reminderCheckbox) reminderCheckbox.checked = newState;
       
-      // Apply theme
-      applyTheme(theme);
+      await chrome.storage.local.set({ dailyReminder: newState });
       
-      // Save preference
-      await chrome.storage.local.set({ theme: theme });
+      if (newState) {
+        // Alarm
+        chrome.alarms.create('dailyReminder', {
+          when: getNextReminderTime(),
+          periodInMinutes: 24 * 60 // Every day
+        });
+      } else {
+        // Clear alarm
+        chrome.alarms.clear('dailyReminder');
+      }
+    });
+  }
+}
+
+// Theme switcher pill — tracks previous selection for animation
+function initialiseThemeSwitcher() {
+  const switcher = document.querySelector('.switcher');
+  if (!switcher) return;
+
+  const radios = switcher.querySelectorAll('input[type="radio"]');
+  let previousValue = null;
+
+  const initiallyChecked = switcher.querySelector('input[type="radio"]:checked');
+  if (initiallyChecked) {
+    previousValue = initiallyChecked.getAttribute('c-option');
+    switcher.setAttribute('c-previous', previousValue);
+  }
+
+  radios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        switcher.setAttribute('c-previous', previousValue ?? '');
+        previousValue = radio.getAttribute('c-option');
+
+        // Map radio value to theme name and apply
+        const themeMap = { '1': 'glass', '2': 'light', '3': 'dark' };
+        const theme = themeMap[previousValue] || 'glass';
+        applyTheme(theme);
+        chrome.storage.local.set({ theme: theme });
+      }
     });
   });
 }
@@ -392,29 +423,34 @@ function applyTheme(theme) {
   } else if (theme === 'dark') {
     document.body.classList.add('theme-dark');
   }
+
+  // Sync the switcher pill radio to match
+  const themeToOption = { glass: '1', light: '2', dark: '3' };
+  const optionVal = themeToOption[theme] || '1';
+  const switcher = document.querySelector('.switcher');
+  if (switcher) {
+    const radio = switcher.querySelector(`input[c-option="${optionVal}"]`);
+    if (radio) radio.checked = true;
+  }
 }
 
 async function loadSettings() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['dailyReminder', 'theme'], (res) => {
       // Load reminder setting
-      const reminderToggle = document.getElementById('reminderToggle');
-      if (reminderToggle) {
-        reminderToggle.checked = res.dailyReminder || false;
+      const reminderToggleBtn = document.getElementById('reminderToggleBtn');
+      const reminderCheckbox = document.getElementById('reminderToggle');
+      const enabled = res.dailyReminder || false;
+      if (reminderToggleBtn) {
+        reminderToggleBtn.setAttribute('aria-checked', String(enabled));
+      }
+      if (reminderCheckbox) {
+        reminderCheckbox.checked = enabled;
       }
       
       // Load theme settings
       const theme = res.theme || 'glass';
       applyTheme(theme);
-      
-      const themeButtons = document.querySelectorAll('.theme-btn');
-      themeButtons.forEach(btn => {
-        if (btn.getAttribute('data-theme') === theme) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
-      });
       
       resolve();
     });
