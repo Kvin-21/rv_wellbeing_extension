@@ -38,6 +38,29 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
+// Pomodoro end alarm — show notification even when popup closed
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'pomodoro-end') {
+    chrome.storage.local.get('nextPomodoroNotification', (res) => {
+      const payload = res.nextPomodoroNotification;
+      if (!payload) return;
+      showPomodoroNotification(payload.title, payload.message);
+      chrome.storage.local.remove('nextPomodoroNotification');
+    });
+  }
+});
+
+function showPomodoroNotification(title, message) {
+  chrome.notifications.create(`pomodoro-${Date.now()}`, {
+    type: 'basic',
+    iconUrl: 'icons/icon128.png',
+    title,
+    message,
+    priority: 2,
+    requireInteraction: false
+  });
+}
+
 // Show notif
 function showDailyReminder() {
   chrome.notifications.create('dailyCheckIn', {
@@ -54,6 +77,12 @@ chrome.notifications.onClicked.addListener((notificationId) => {
   if (notificationId === 'dailyCheckIn') {
     // Clear notif
     chrome.notifications.clear(notificationId);
+    chrome.storage.local.set({
+      openIntent: {
+        tab: 'home',
+        timestamp: Date.now()
+      }
+    });
 
     // Focus existing window then open popup; fallback to a popup window
     chrome.windows.getAll({ populate: true }, (windows) => {
@@ -75,6 +104,24 @@ chrome.notifications.onClicked.addListener((notificationId) => {
           width: 380,
           height: 560
         });
+      }
+    });
+  }
+  if (typeof notificationId === 'string' && notificationId.indexOf('pomodoro-') === 0) {
+    // user clicked pomodoro notification — open popup and focus
+    chrome.notifications.clear(notificationId);
+    chrome.storage.local.set({
+      openIntent: { tab: 'focus', timestamp: Date.now() }
+    });
+    chrome.windows.getAll({ populate: true }, (windows) => {
+      if (windows.length > 0) {
+        chrome.windows.update(windows[0].id, { focused: true }, () => {
+          chrome.action.openPopup().catch(() => {
+            chrome.windows.create({ url: chrome.runtime.getURL('popup.html'), type: 'popup', width: 380, height: 560 });
+          });
+        });
+      } else {
+        chrome.windows.create({ url: chrome.runtime.getURL('popup.html'), type: 'popup', width: 380, height: 560 });
       }
     });
   }
