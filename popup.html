@@ -15,23 +15,36 @@
         <feColorMatrix type="saturate" values="1.5"/>
       </filter>
       <filter id="goo">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
-        <feColorMatrix in="blur" mode="matrix"
+        <feGaussianBlur in="SourceGraphic" stdDeviation="13" result="blur"/>
+        <feColorMatrix in="blur" type="matrix"
           values="1 0 0 0 0
                   0 1 0 0 0
                   0 0 1 0 0
-                  0 0 0 16 -10" result="goo"/>
-        <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+                  0 0 0 13 -10" result="goo"/>
+        <feComposite in="goo" in2="SourceGraphic" operator="atop"/>
       </filter>
       <filter id="remove-black" color-interpolation-filters="sRGB">
         <feColorMatrix type="matrix"
           values="1 0 0 0 0
                   0 1 0 0 0
                   0 0 1 0 0
-                  -10 -10 -10 30 0"/>
+                  -255 -255 -255 0 1" result="black-pixels"/>
+        <feMorphology in="black-pixels" operator="dilate" radius="0.5" result="smoothed"/>
+        <feComposite in="SourceGraphic" in2="smoothed" operator="out"/>
       </filter>
     </defs>
   </svg>
+
+  <div class="mascot-orb" id="mascotOrb" role="img" aria-label="Roaming study cat">
+    <img src="cats/sleeping.png" class="mascot-orb-img active" data-state="idle" alt="Cat sleeping">
+    <img src="cats/studying.png" class="mascot-orb-img" data-state="study" alt="Cat studying">
+    <img src="cats/happy.png" class="mascot-orb-img" data-state="reward" alt="Happy cat">
+    <img src="cats/napping.png" class="mascot-orb-img" data-state="break" alt="Cat napping">
+    <img src="cats/cute_in_box.png" class="mascot-orb-img" data-state="celebrate" alt="Celebrating cat in a box">
+  </div>
+  <div class="mascot-pop hidden" id="mascotPop" aria-live="polite"><span class="bubble-text" id="mascotPopText"></span></div>
+  <div class="fish-projectile hidden" id="fishProjectile">🐟</div>
+
 
   <div class="container glass">
     <header class="header">
@@ -43,15 +56,10 @@
     </header>
 
     <nav class="tabs glass-element" role="tablist">
-      <button class="tab active" data-tab="home" role="tab" aria-selected="true" aria-controls="home-tab">
-        Home
-      </button>
-      <button class="tab" data-tab="settings" role="tab" aria-selected="false" aria-controls="settings-tab">
-        Settings
-      </button>
-      <button class="tab" data-tab="feedback" role="tab" aria-selected="false" aria-controls="feedback-tab">
-        Feedback
-      </button>
+      <button class="tab active" data-tab="home" role="tab" aria-selected="true" aria-controls="home-tab">Home</button>
+      <button class="tab" data-tab="focus" role="tab" aria-selected="false" aria-controls="focus-tab">Focus</button>
+      <button class="tab" data-tab="settings" role="tab" aria-selected="false" aria-controls="settings-tab">Settings</button>
+      <button class="tab" data-tab="feedback" role="tab" aria-selected="false" aria-controls="feedback-tab">Feedback</button>
     </nav>
 
     <div class="tab-content active" id="home-tab" role="tabpanel">
@@ -90,21 +98,48 @@
             <p id="microActionText"></p>
           </div>
           <div class="response-actions">
-            <button class="btn btn-primary glass-button" id="tryThisBtn">
-              I'll try this
-            </button>
-            <button class="btn btn-secondary glass-button" id="anotherIdeaBtn">
-              Give me another idea
-            </button>
+            <button class="btn btn-primary glass-button" id="tryThisBtn">I'll try this</button>
+            <button class="btn btn-secondary glass-button" id="anotherIdeaBtn">Give me another idea</button>
           </div>
         </div>
       </div>
     </div>
 
+    <div class="tab-content" id="focus-tab" role="tabpanel">
+      <section class="focus-panel glass-element">
+        <div class="focus-header">
+          <h2 class="section-title">Focus Mode</h2>
+          <div class="focus-badge" id="focusModeBadge">Focus</div>
+        </div>
+
+        <div class="pomodoro-clock glass-inner" aria-live="polite">
+          <div class="clock-ring-shell" id="clockRingShell">
+            <svg class="clock-ring-svg" viewBox="0 0 200 200" aria-hidden="true">
+              <circle class="clock-ring-track" cx="100" cy="100" r="84"></circle>
+              <circle class="clock-ring-progress" id="clockRingProgress" cx="100" cy="100" r="84"></circle>
+            </svg>
+            <div class="clock-inner">
+              <p class="clock-time" id="timerDisplay">25:00</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pomodoro-controls">
+          <button class="btn btn-primary glass-button pomodoro-main-btn" id="startPausePomodoroBtn">Start Focus</button>
+          <button class="btn btn-secondary glass-button" id="breakPomodoroBtn">Break</button>
+          <button class="btn btn-secondary glass-button" id="resetPomodoroBtn">Reset</button>
+        </div>
+
+        <div class="focus-stats glass-inner">
+          <p><strong id="sessionsCount">0</strong> focus sessions done</p>
+        </div>
+      </section>
+    </div>
+
     <div class="tab-content" id="settings-tab" role="tabpanel">
       <div class="settings-section">
         <h2 class="section-title">Settings</h2>
-        
+
         <div class="setting-group glass-element">
           <h3 class="group-title">Daily Reminder</h3>
           <div class="setting-item">
@@ -112,30 +147,30 @@
               <label class="setting-label" for="reminderToggle">Check-in Notification</label>
               <p class="setting-description">Get a reminder each day at 8:15 AM</p>
             </div>
-            <!-- liquid toggle -->
             <button
               class="liquid-toggle"
               id="reminderToggleBtn"
               role="switch"
               aria-checked="false"
               aria-label="Toggle daily reminder"
+              data-bounce="true"
             >
               <input type="checkbox" id="reminderToggle" style="display:none" tabindex="-1">
               <div class="indicator" aria-hidden="true"></div>
               <div class="knockout" aria-hidden="true">
-                <div class="indicator--masked">
+                <div class="indicator indicator--masked">
                   <div class="mask"></div>
                 </div>
               </div>
-              <div class="wrapper" aria-hidden="true">
-                <div class="liquids">
-                  <div class="liquid__shadow"></div>
-                  <div class="liquid__track"></div>
-                </div>
-              </div>
               <div class="indicator__liquid" aria-hidden="true">
-                <div class="cover"></div>
                 <div class="shadow"></div>
+                <div class="wrapper">
+                  <div class="liquids">
+                    <div class="liquid__shadow"></div>
+                    <div class="liquid__track"></div>
+                  </div>
+                </div>
+                <div class="cover"></div>
               </div>
             </button>
           </div>
@@ -143,68 +178,67 @@
 
         <div class="setting-group glass-element">
           <h3 class="group-title">Theme</h3>
-          <p class="group-description">Choose your preferred visual style</p>
-          <!-- glass switcher pill -->
-          <fieldset class="switcher" id="themeSwitcher" c-previous="1">
-            <legend class="switcher__legend">Theme</legend>
+          <p class="group-description">Pick a look that feels best today</p>
 
-            <label class="switcher__option">
-              <input class="switcher__input" type="radio" name="theme-switcher" value="glass" c-option="1" checked>
-              <span class="switcher__label-inner">
-                <span class="theme-preview glass-preview switcher__preview" aria-hidden="true"></span>
-                <span class="switcher__text">Glass</span>
-              </span>
+          <div class="theme-palette" id="themePalette" role="radiogroup" aria-label="Theme options">
+            <label class="theme-dot">
+              <input type="radio" name="theme-choice" value="glass" checked>
+              <span class="theme-dot-preview theme-glass-dot" aria-hidden="true"></span>
+              <span class="theme-dot-label">Glass</span>
             </label>
-
-            <label class="switcher__option">
-              <input class="switcher__input" type="radio" name="theme-switcher" value="light" c-option="2">
-              <span class="switcher__label-inner">
-                <span class="theme-preview light-preview switcher__preview" aria-hidden="true"></span>
-                <span class="switcher__text">Light</span>
-              </span>
+            <label class="theme-dot">
+              <input type="radio" name="theme-choice" value="light">
+              <span class="theme-dot-preview theme-light-dot" aria-hidden="true"></span>
+              <span class="theme-dot-label">Light</span>
             </label>
-
-            <label class="switcher__option">
-              <input class="switcher__input" type="radio" name="theme-switcher" value="dark" c-option="3">
-              <span class="switcher__label-inner">
-                <span class="theme-preview dark-preview switcher__preview" aria-hidden="true"></span>
-                <span class="switcher__text">Dark</span>
-              </span>
+            <label class="theme-dot">
+              <input type="radio" name="theme-choice" value="dark">
+              <span class="theme-dot-preview theme-dark-dot" aria-hidden="true"></span>
+              <span class="theme-dot-label">Dark</span>
             </label>
-          </fieldset>
+            <label class="theme-dot">
+              <input type="radio" name="theme-choice" value="sunset">
+              <span class="theme-dot-preview theme-sunset-dot" aria-hidden="true"></span>
+              <span class="theme-dot-label">Sunset</span>
+            </label>
+            <label class="theme-dot">
+              <input type="radio" name="theme-choice" value="ocean">
+              <span class="theme-dot-preview theme-ocean-dot" aria-hidden="true"></span>
+              <span class="theme-dot-label">Ocean</span>
+            </label>
+            <label class="theme-dot">
+              <input type="radio" name="theme-choice" value="grape">
+              <span class="theme-dot-preview theme-grape-dot" aria-hidden="true"></span>
+              <span class="theme-dot-label">Grape</span>
+            </label>
+          </div>
         </div>
-
       </div>
     </div>
 
-    <!-- Feedback -->
     <div class="tab-content" id="feedback-tab" role="tabpanel">
       <div class="feedback-section">
         <h2 class="section-title">Share Your Thoughts</h2>
-        <p class="feedback-description">
-          Tell us how you're feeling, what's on your mind, or share any suggestions. Your voice matters.
-        </p>
-        <textarea 
-          class="feedback-textarea glass-element" 
-          id="feedbackText" 
-          placeholder="What's on your mind?" 
+        <p class="feedback-description">Tell us how you're feeling, what's on your mind, or share any suggestions. Your voice matters.</p>
+        <textarea
+          class="feedback-textarea glass-element"
+          id="feedbackText"
+          placeholder="What's on your mind?"
           rows="5"
           maxlength="500"
         ></textarea>
-        <button class="btn btn-primary glass-button" id="submitFeedback">
-          Submit Feedback
-        </button>
+        <button class="btn btn-primary glass-button" id="submitFeedback">Submit Feedback</button>
         <div class="feedback-success hidden" id="feedbackSuccess">
           <span class="success-icon">✓</span>
           <span>Thank you for sharing!</span>
         </div>
-        
+
         <div class="quick-link">
           <a href="https://rivervalleyhigh.moe.edu.sg" target="_blank" class="school-link glass-button">
             Visit River Valley High School →
           </a>
         </div>
-        <p class="credit-watermark">github.com/Kvin-21/rv_wellbeing_extension</p>
+        <p class="git">github.com/Kvin-21/rv_wellbeing_extension</p>
       </div>
     </div>
   </div>
