@@ -28,6 +28,22 @@ const CLOCK_SVG_CENTER = 100;
 const CLOCK_RING_RADIUS = 84;
 const CLOCK_RING_CIRCUMFERENCE = 2 * Math.PI * CLOCK_RING_RADIUS;
 const MIN_STROKE_DASH = 0.0001;
+const RESPONSE_TEXT_SIZE_CONFIG = {
+  validation: {
+    base: 18,
+    min: 14,
+    referenceLength: 55,
+    shrinkPerChar: 0.08
+  },
+  microAction: {
+    base: 16,
+    min: 13,
+    referenceLength: 41,
+    shrinkPerChar: 0.09
+  }
+};
+const RESPONSE_TEXT_STEP_PX = 0.4;
+const RESPONSE_TEXT_FIT_MAX_PASSES = 20;
 
 let currentEmotion = null;
 let responses = {};
@@ -211,8 +227,53 @@ function displayRandomResponse(emotion) {
     usedResponseIndices[emotion].microActions = [];
   }
 
-  document.getElementById('validationText').textContent = emotionData.validations[validationIndex];
-  document.getElementById('microActionText').textContent = microActions[actionIndex];
+  const validationText = document.getElementById('validationText');
+  const microActionText = document.getElementById('microActionText');
+  validationText.textContent = emotionData.validations[validationIndex];
+  microActionText.textContent = microActions[actionIndex];
+  adjustResponseTextSizing();
+}
+
+function getScaledFontSize(text, config) {
+  const length = (text || '').length;
+  if (length <= config.referenceLength) return config.base;
+
+  const shrinkAmount = (length - config.referenceLength) * config.shrinkPerChar;
+  return Math.max(config.min, config.base - shrinkAmount);
+}
+
+function adjustResponseTextSizing() {
+  const homeTab = document.getElementById('home-tab');
+  const responseScreen = document.getElementById('responseScreen');
+  const responseCard = responseScreen?.querySelector('.response-card');
+  const validationText = document.getElementById('validationText');
+  const microActionText = document.getElementById('microActionText');
+  if (!responseScreen || !responseCard || !validationText || !microActionText) return;
+  const availableHeight = homeTab ? homeTab.clientHeight : responseScreen.clientHeight;
+  if (availableHeight <= 0) return;
+
+  const sizeTargets = [
+    { element: validationText, config: RESPONSE_TEXT_SIZE_CONFIG.validation },
+    { element: microActionText, config: RESPONSE_TEXT_SIZE_CONFIG.microAction }
+  ];
+
+  const currentSizes = [];
+  sizeTargets.forEach(({ element, config }) => {
+    const size = getScaledFontSize(element.textContent, config);
+    currentSizes.push(size);
+    element.style.fontSize = `${size}px`;
+  });
+
+  let pass = 0;
+  while (responseCard.scrollHeight > availableHeight && pass < RESPONSE_TEXT_FIT_MAX_PASSES) {
+    sizeTargets.forEach(({ element, config }, index) => {
+      if (currentSizes[index] > config.min) {
+        currentSizes[index] = Math.max(config.min, currentSizes[index] - RESPONSE_TEXT_STEP_PX);
+        element.style.fontSize = `${currentSizes[index]}px`;
+      }
+    });
+    pass += 1;
+  }
 }
 
 function getRandomIndex(max, usedIndices) {

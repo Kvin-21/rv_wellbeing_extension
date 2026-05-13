@@ -25,6 +25,9 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+
+  --validation-font-size: 18px;
+  --micro-action-font-size: 16px;
   
   --radius-sm: 12px;
   --radius-md: 16px;
@@ -405,7 +408,7 @@ body.theme-dark .glass-element {
 }
 
 .validation {
-  font-size: 18px;
+  font-size: var(--validation-font-size);
   font-weight: 600;
   color: var(--c-content);
   margin-bottom: var(--spacing-md);
@@ -428,7 +431,7 @@ body.theme-dark .glass-element {
 }
 
 .micro-action p {
-  font-size: 16px;
+  font-size: var(--micro-action-font-size);
   font-weight: 500;
   color: var(--c-content);
   line-height: 1.6;
