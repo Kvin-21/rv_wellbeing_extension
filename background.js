@@ -66,7 +66,7 @@ function showDailyReminder() {
   chrome.notifications.create('dailyCheckIn', {
     type: 'basic',
     iconUrl: 'icons/icon128.png',
-    title: '💙 River Valley Wellbeing',
+    title: 'River Valley Wellbeing',
     message: 'How are you feeling today? Take a moment to check in with yourself!',
     priority: 2,
     requireInteraction: false
